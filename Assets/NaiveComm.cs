@@ -8,6 +8,7 @@ using agora_utilities;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System;
+using System.Text;
 
 public class NaiveComm : MonoBehaviour
 {
@@ -19,7 +20,7 @@ public class NaiveComm : MonoBehaviour
     [SerializeField]
     string ChannelName = "hello";
     
-    string Token = "0061999b7231aa94b50b6a3905974300f05IABnpPmdVSR8181/aqC/9WbqU5+/cfNv38OO0FmzeJ7UwoamEDYAAAAAEABgTjz6VKYqYgEAAQBUpipi";
+    string Token = "0061999b7231aa94b50b6a3905974300f05IAAbbCgTiC79R/7nMJAGBkOxMOUkWVcAcD9pt8bgPXCYsYamEDYAAAAAEAAb78m5BkkvYgEAAQCWxy9i";
                        
 
     Texture2D mTexture;
@@ -32,9 +33,14 @@ public class NaiveComm : MonoBehaviour
     RawImage remoteImage;
 
     IRtcEngine mRtcEngine;
+    Metadata metaData;
+    MetadataObserver mtObserver;
     Text AppIDText;
     Text ChannelText;
     Text DebugMsg;
+    byte[] string_screenshare = Encoding.UTF8.GetBytes("screen sharing");
+    int stream_id;
+    DataStreamConfig msgConfig;
 
     
     void Awake()
@@ -88,6 +94,10 @@ public class NaiveComm : MonoBehaviour
 
     void SetupAgora()
     {
+        msgConfig = new DataStreamConfig();
+        msgConfig.syncWithAudio = false;
+        msgConfig.ordered = false;
+
         DebugMsg.text = "[Naive] Setup Agora";
         mRtcEngine = IRtcEngine.GetEngine(AppID);
 
@@ -95,6 +105,7 @@ public class NaiveComm : MonoBehaviour
         mRtcEngine.OnUserOffline = OnUserOffline;
         mRtcEngine.OnJoinChannelSuccess = OnJoinChannelSuccessHandler;
         mRtcEngine.OnLeaveChannel = OnLeaveChannelHandler;
+        mRtcEngine.OnStreamMessage = OnStreamMessageHandler;
     }
 
     void Join()
@@ -108,7 +119,9 @@ public class NaiveComm : MonoBehaviour
         mRtcEngine.EnableVideoObserver();
 
         myImage.GetComponent<VideoSurface>().SetEnable(true);
+        mRtcEngine.EnableDualStreamMode(true);
         //myView.SetEnable(true);
+
         mRtcEngine.JoinChannelByKey(Token, ChannelName, "", 0);
     }
 
@@ -125,7 +138,6 @@ public class NaiveComm : MonoBehaviour
         //mRtcEngine.SetExternalVideoSource(true, false);
         //isShare = true;
         //DebugMsg.text = "Start to Screen Share";
-        DebugMsg.text = "Share()";
 
         TestRectCrop(1);
     }
@@ -160,7 +172,7 @@ public class NaiveComm : MonoBehaviour
     void OnUserJoined(uint uid, int elapsed)
     {
 
-        DebugMsg.text = "channel joined - uid : " + uid;
+        
 
         remoteImage = GameObject.Find("RemoteView").GetComponent<RawImage>();
        
@@ -169,13 +181,19 @@ public class NaiveComm : MonoBehaviour
 
         if (remoteView == null)
         {
+            DebugMsg.text = "remoteView is null";
             remoteImage.gameObject.AddComponent<VideoSurface>();
+
         }
+        remoteView = remoteImage.GetComponent<VideoSurface>();
+
 
         remoteView.SetForUser(uid);
         remoteView.SetEnable(true);
         remoteView.SetVideoSurfaceType(AgoraVideoSurfaceType.RawImage);
         remoteView.SetGameFps(30);
+
+        DebugMsg.text = "channel joined - uid : " + uid;
 
 
     }
@@ -199,13 +217,34 @@ public class NaiveComm : MonoBehaviour
     {
         // Assuming you have two display monitors, each of 1920x1080, position left to right:
         Rectangle screenRect = new Rectangle() { x = 0, y = 0, width = 1920 , height = 1080 };
-        Rectangle regionRect = new Rectangle() { x = 180, y = 180, width = 640, height = 480 };
+        Rectangle regionRect = new Rectangle() { x = 0, y = 0, width = 1920, height = 1080 };
 
         int rc = mRtcEngine.StartScreenCaptureByScreenRect(screenRect,
             regionRect,
             default(ScreenCaptureParameters)
             );
         if (rc != 0) Debug.LogWarning("rc = " + rc);
+
+        stream_id = mRtcEngine.CreateDataStream(msgConfig);
+
+
+        myImage = GameObject.Find("MyView").GetComponent<RawImage>();
+        remoteImage = GameObject.Find("RemoteView").GetComponent<RawImage>();
+        mRtcEngine.SendStreamMessage(stream_id, string_screenshare);
+        myImage.GetComponent<RectTransform>().sizeDelta = new Vector2(640, 480);
+
+            //myImage.GetComponent<RectTransform>().position = new Vector2(0, 0);
+
+    }
+
+    void OnStreamMessageHandler(uint userId, int streamId, byte[] data, int length)
+    {
+        DebugMsg.text = "[KKR]OnStreamMessageHandler";
+        myImage = GameObject.Find("MyView").GetComponent<RawImage>();
+        remoteImage = GameObject.Find("RemoteView").GetComponent<RawImage>();
+        remoteImage.GetComponent<RectTransform>().sizeDelta = new Vector2(640, 480);
+
+
     }
 
 
