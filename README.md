@@ -18,7 +18,7 @@ https://console.agora.io/
 ![GenerateToken](./token_2.png)
 
 
-1. Agora SDK 설치 및 unity project에 import  
+2. Agora SDK 설치 및 unity project에 import  
 유티니상에 agora를 import 해서 사용하는 법에 대해서 알아보겠습니다.  
 https://assetstore.unity.com/packages/tools/video/agora-video-sdk-for-unity-134502
 에 접속하셔서 Unity에서 열기를 선택한 후에 import 해주시면 됩니다
@@ -27,7 +27,7 @@ https://assetstore.unity.com/packages/tools/video/agora-video-sdk-for-unity-1345
 
 버튼을 선택한 후에 unity 창에서 열면 아래와 같이 뜨는데 import 버튼을 눌러주면 Video Call을 위한 아고라 SDK 설치및 설정이 끝이 납니다
 
-1. 코드 작성하기 - 기본 Video Call  
+3. 코드 작성하기 - 기본 Video Call  
 Agora는 굉장히 심플합니다.  
 아래의 시퀀스 다이어그램만 이해하고 있으면 손 쉽게 짤수 있습니다.  
 ![SequenceDiagram](./agora_sequence.png)
@@ -38,6 +38,6 @@ GetEngine() 함수를 통해서 AgoraEngine을 생성하고 그 뒤에 video 설
 혹시 내가 채널에 Join 하였는지 확인하려면 이때 Log Message를 보면 됩니다. .  
 이렇게 하면 기본적인 비디오 통화가 완성이 되게 됩니다.  
 
-1. ScreenShare  
+4. ScreenShare  
 void TestRectCrop(int order) 함수를 참고해 주세요
 mRtcEngine.StartScreenCaptureByScreenRect() 이 함수만 콜 해주면 됩니다
