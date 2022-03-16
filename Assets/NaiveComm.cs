@@ -20,7 +20,7 @@ public class NaiveComm : MonoBehaviour
     [SerializeField]
     string ChannelName = "hello";
     
-    string Token = "";
+    string Token = "0061999b7231aa94b50b6a3905974300f05IACvzD30egrrNUGCAZQfJCqcOLDC3YhFHd+kj4hZVOOJpIamEDYAAAAAEADnfDPKFf0yYgEAAQAV/TJi";
                        
 
     Texture2D mTexture;
@@ -298,12 +298,12 @@ public class NaiveComm : MonoBehaviour
         
 
         mRtcEngine.SendStreamMessage(stream_id, string_screenshare);
-        myImage.GetComponent<RectTransform>().sizeDelta = new Vector2(640, 480);
+        myImage.GetComponent<RectTransform>().sizeDelta = new Vector2(1280, 720);
         
-        my_share_pt = new Vector3(-300, 0, 0);
+        my_share_pt = new Vector3(0, 0, 0);
         myImage.GetComponent<RectTransform>().anchoredPosition = my_share_pt;
         remoteImage.GetComponent<RectTransform>().sizeDelta = new Vector2(240, 160);
-        remoteImage.GetComponent<RectTransform>().anchoredPosition = new Vector3(230, 0, 0);
+        remoteImage.GetComponent<RectTransform>().anchoredPosition = new Vector3(480, -250, 0);
 
     }
 
@@ -320,7 +320,7 @@ public class NaiveComm : MonoBehaviour
             myImage = GameObject.Find("MyView").GetComponent<RawImage>();
             remoteImage = GameObject.Find("RemoteView").GetComponent<RawImage>();
             remoteImage.GetComponent<RectTransform>().sizeDelta = new Vector2(480, 320);
-            remoteImage.GetComponent<RectTransform>().anchoredPosition = new Vector3(300, -30, 151);
+            remoteImage.GetComponent<RectTransform>().anchoredPosition = new Vector3(300, -30, 0);
             myImage.GetComponent<RectTransform>().sizeDelta = new Vector2(480, 320);
             myImage.GetComponent<RectTransform>().anchoredPosition = new Vector3(-300, 0, 0);
 
@@ -328,12 +328,14 @@ public class NaiveComm : MonoBehaviour
         else
         {
             DebugMsg.text = "[KKR]OnStreamMessageHandler";
+            remoteImage.GetComponent<Transform>().SetAsFirstSibling();
             myImage = GameObject.Find("MyView").GetComponent<RawImage>();
             remoteImage = GameObject.Find("RemoteView").GetComponent<RawImage>();
-            remoteImage.GetComponent<RectTransform>().sizeDelta = new Vector2(640, 480);
-            remoteImage.GetComponent<RectTransform>().anchoredPosition = new Vector3(300, -30, 151);
+            remoteImage.GetComponent<RectTransform>().sizeDelta = new Vector2(1280, 720);
+            remoteImage.GetComponent<RectTransform>().anchoredPosition = new Vector3(0, 0, 0);
+            
             myImage.GetComponent<RectTransform>().sizeDelta = new Vector2(240, 160);
-            myImage.GetComponent<RectTransform>().anchoredPosition = new Vector3(-300, 0, 0);
+            myImage.GetComponent<RectTransform>().anchoredPosition = new Vector3(-480, -250, 0);
 
         }
 
