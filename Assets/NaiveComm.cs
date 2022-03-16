@@ -20,26 +20,32 @@ public class NaiveComm : MonoBehaviour
     [SerializeField]
     string ChannelName = "hello";
     
-    string Token = "0061999b7231aa94b50b6a3905974300f05IAB9Vqq9HBfi5XsOrhn+dTd0HtbdTmgwzFBs1q5jLimzgoamEDYAAAAAEADAxvLagCwxYgEAAQCALDFi";
+    string Token = "";
                        
 
     Texture2D mTexture;
     Rect mRect;
     int cnt = 100;
-    bool isShare = false;
+    bool isMyShare = false;
+    bool isOtherShare = false;
 
 
     RawImage myImage;
     RawImage remoteImage;
 
     IRtcEngine mRtcEngine;
-    Text AppIDText;
-    Text ChannelText;
     Text DebugMsg;
     byte[] string_screenshare = Encoding.UTF8.GetBytes("screen sharing");
+    byte[] string_camon = Encoding.UTF8.GetBytes("cam on");
     int stream_id;
     DataStreamConfig msgConfig;
     VideoEncoderConfiguration config;
+
+    [SerializeField]
+
+    public Vector3 my_share_pt;
+    public Vector3 other_share_pt;
+
 
 
     void Awake()
@@ -48,44 +54,46 @@ public class NaiveComm : MonoBehaviour
     }
     void SetupUI()
     {
+        Screen.SetResolution(1280, 720, false);
+        
         myImage = GameObject.Find("MyView").GetComponent<RawImage>();
         myImage.gameObject.AddComponent<VideoSurface>();
 
-        
-
-
         GameObject go = GameObject.Find("LeaveButton");
         go?.GetComponent<Button>()?.onClick.AddListener(Leave);
-        go = GameObject.Find("JoinButton");
-        go?.GetComponent<Button>()?.onClick.AddListener(Join);
         DebugMsg = GameObject.Find("DebugMsg").GetComponent<Text>();
+
         go = GameObject.Find("ShareButton");
         go?.GetComponent<Button>()?.onClick.AddListener(Share);
         go = GameObject.Find("QuitButton");
         go.GetComponent<Button>().onClick.AddListener(Quit);
         go = GameObject.Find("CamButton");
         go.GetComponent<Button>().onClick.AddListener(CameraOn);
-
-
-        AppIDText = GameObject.Find("AppID").GetComponent<Text>();
-        ChannelText = GameObject.Find("Channel").GetComponent<Text>();
+      
 
 
     }
 
     void CameraOn()
     {
-        mRtcEngine.StopScreenCapture();
+        if(isOtherShare)
+        {
+            Debug.Log("isOtherShare");
+        }
 
-        myImage = GameObject.Find("MyView").GetComponent<RawImage>();
-        
-        myImage.GetComponent<RectTransform>().sizeDelta = new Vector2(320, 240);
-        myImage.GetComponent<RectTransform>().anchoredPosition = new Vector3(-317, 0, 154);
+        if(isMyShare)
+        {
+            mRtcEngine.StopScreenCapture();
+            mRtcEngine.SendStreamMessage(stream_id, string_camon);
+            myImage = GameObject.Find("MyView").GetComponent<RawImage>();
 
-        remoteImage = GameObject.Find("RemoteView").GetComponent<RawImage>();
-        remoteImage.GetComponent<RectTransform>().sizeDelta = new Vector2(320, 240);
-        remoteImage.GetComponent<RectTransform>().anchoredPosition = new Vector3(100, 0, 154);
+            myImage.GetComponent<RectTransform>().sizeDelta = new Vector2(480, 320);
+            myImage.GetComponent<RectTransform>().anchoredPosition = new Vector3(-300, -30, 0);
 
+            remoteImage = GameObject.Find("RemoteView").GetComponent<RawImage>();
+            remoteImage.GetComponent<RectTransform>().sizeDelta = new Vector2(480, 320);
+            remoteImage.GetComponent<RectTransform>().anchoredPosition = new Vector3(300, -30, 0);
+        }
 
     }
 
@@ -111,14 +119,15 @@ public class NaiveComm : MonoBehaviour
     {
         SetupVideoConfig();
         SetupAgora();
-        
-        
+        Join();
+
+
+
     }
 
     private void Update()
     {
-       // if(isShare)
-       //     StartCoroutine(shareScreen());
+      
     }
 
     void SetupAgora()
@@ -143,8 +152,8 @@ public class NaiveComm : MonoBehaviour
      void SetupVideoConfig()
     {
         config = new VideoEncoderConfiguration();
-        config.dimensions.width = 640;
-        config.dimensions.height = 480;
+        config.dimensions.width = 1280;
+        config.dimensions.height = 720;
         // Sets the video frame rate.
         config.frameRate = FRAME_RATE.FRAME_RATE_FPS_30;
         // Sets the video encoding bitrate (Kbps).
@@ -162,18 +171,16 @@ public class NaiveComm : MonoBehaviour
 
     void Join()
     {
-        AppIDText.text = "My AppID : " + AppID;
-        ChannelText.text = "My Channel ID : " + ChannelName;
-        
+              
         DebugMsg.text = "Join Pressed. Channel Name is " + ChannelName;
+        
+       
 
         mRtcEngine.SetVideoEncoderConfiguration(config);
         mRtcEngine.EnableVideo();
         mRtcEngine.EnableVideoObserver();
-
-        myImage.GetComponent<VideoSurface>().SetEnable(true);
-        mRtcEngine.EnableDualStreamMode(true);
-        //myView.SetEnable(true);
+        myImage = GameObject.Find("MyView").GetComponent<RawImage>();
+        myImage.gameObject.GetComponent<VideoSurface>().SetEnable(true);
 
         mRtcEngine.JoinChannelByKey(Token, ChannelName, "", 0);
     }
@@ -191,6 +198,10 @@ public class NaiveComm : MonoBehaviour
         //mRtcEngine.SetExternalVideoSource(true, false);
         //isShare = true;
         //DebugMsg.text = "Start to Screen Share";
+        isMyShare = true;
+        isOtherShare = false;
+
+
 
         TestRectCrop(1);
     }
@@ -207,7 +218,7 @@ public class NaiveComm : MonoBehaviour
 
     void OnJoinChannelSuccessHandler(string channelName, uint uid, int elapsed)
     {
-        DebugMsg.text = "Joined channel" + channelName + "my uid = " + uid;
+        DebugMsg.text = "Joined channel : " + channelName + " my uid : " + uid;
         //Debug.LogFormat("Joined channel {0} successful, my uid = {1}", channelName, uid);
         //Debug.Log("Join channel : " + channelName + " my uid : " + uid);
     }
@@ -228,7 +239,8 @@ public class NaiveComm : MonoBehaviour
         
 
         remoteImage = GameObject.Find("RemoteView").GetComponent<RawImage>();
-       
+        remoteImage.gameObject.AddComponent<VideoSurface>();
+
 
         VideoSurface remoteView = remoteImage.GetComponent<VideoSurface>();
 
@@ -287,7 +299,9 @@ public class NaiveComm : MonoBehaviour
 
         mRtcEngine.SendStreamMessage(stream_id, string_screenshare);
         myImage.GetComponent<RectTransform>().sizeDelta = new Vector2(640, 480);
-        myImage.GetComponent<RectTransform>().anchoredPosition = new Vector3(-300, -130, 151);
+        
+        my_share_pt = new Vector3(-300, 0, 0);
+        myImage.GetComponent<RectTransform>().anchoredPosition = my_share_pt;
         remoteImage.GetComponent<RectTransform>().sizeDelta = new Vector2(240, 160);
         remoteImage.GetComponent<RectTransform>().anchoredPosition = new Vector3(230, 0, 0);
 
@@ -295,14 +309,47 @@ public class NaiveComm : MonoBehaviour
 
     void OnStreamMessageHandler(uint userId, int streamId, byte[] data, int length)
     {
-        DebugMsg.text = "[KKR]OnStreamMessageHandler";
-        myImage = GameObject.Find("MyView").GetComponent<RawImage>();
-        remoteImage = GameObject.Find("RemoteView").GetComponent<RawImage>();
-        remoteImage.GetComponent<RectTransform>().sizeDelta = new Vector2(640, 480);
-        remoteImage.GetComponent<RectTransform>().anchoredPosition = new Vector3(-300, -130, 151);
-        myImage.GetComponent<RectTransform>().sizeDelta = new Vector2(240, 160);
-        myImage.GetComponent<RectTransform>().anchoredPosition = new Vector3(230, 0, 0);
+        byte[] byteMsg = new byte[length];
+        Buffer.BlockCopy(data, 0, byteMsg, 0, length);
+        string stringMsg = Encoding.Default.GetString(byteMsg);
+        DebugMsg.text = stringMsg;
 
+        if (stringMsg == Encoding.Default.GetString(string_camon)) //change code
+        {
+            DebugMsg.text = "[KKR]Camera On";
+            myImage = GameObject.Find("MyView").GetComponent<RawImage>();
+            remoteImage = GameObject.Find("RemoteView").GetComponent<RawImage>();
+            remoteImage.GetComponent<RectTransform>().sizeDelta = new Vector2(480, 320);
+            remoteImage.GetComponent<RectTransform>().anchoredPosition = new Vector3(300, -30, 151);
+            myImage.GetComponent<RectTransform>().sizeDelta = new Vector2(480, 320);
+            myImage.GetComponent<RectTransform>().anchoredPosition = new Vector3(-300, 0, 0);
+
+        }
+        else
+        {
+            DebugMsg.text = "[KKR]OnStreamMessageHandler";
+            myImage = GameObject.Find("MyView").GetComponent<RawImage>();
+            remoteImage = GameObject.Find("RemoteView").GetComponent<RawImage>();
+            remoteImage.GetComponent<RectTransform>().sizeDelta = new Vector2(640, 480);
+            remoteImage.GetComponent<RectTransform>().anchoredPosition = new Vector3(300, -30, 151);
+            myImage.GetComponent<RectTransform>().sizeDelta = new Vector2(240, 160);
+            myImage.GetComponent<RectTransform>().anchoredPosition = new Vector3(-300, 0, 0);
+
+        }
+
+
+
+
+
+
+
+        if (isMyShare == true)
+        {
+            mRtcEngine.StopScreenCapture();
+            isMyShare = false;
+        }
+
+        isOtherShare = true;
 
     }
 
